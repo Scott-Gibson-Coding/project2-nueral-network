@@ -2,12 +2,24 @@ from pytest import approx
 import numpy as np
 
 from src.modules.read_data import read_data, one_hot_encode
-from src.modules.dense_net import DenseNet, DenseLayer, ALinear, LQuadratic
+from src.modules.dense_net import DenseNet, DenseLayer, ASigmoid, LQuadratic
 
 # Read in data once to reference for the following tests.
 train_data, val_data, test_data = read_data()
 
 ### TEST ACTIVATION CLASSES ###
+
+def test_sigmoid():
+    """Test that the sigmoid activation function is behaving (roughly) as expected."""
+    act = ASigmoid()
+
+    a_out = act.forward(np.array([-400, -5, 0, 5, 400]))
+
+    assert a_out[0] == approx(0)
+    assert a_out[1] > 0.001 and a_out[1] < 0.01
+    assert a_out[2] == approx(0.5)
+    assert a_out[3] > 0.990 and a_out[3] < 0.999
+    assert a_out[4] == approx(1)
 
 ### TEST LOSS CLASSES ###
 
@@ -38,15 +50,17 @@ def test_lquadratic():
 
     assert L.calc(pred, actual) == approx(1)
 
-### TEST TRAINING ###
+### TEST PREDICTION/VALIDATION ###
+
 def get_training_net(hidden_layer_neurons=10):
     input_size = train_data[0][0].shape[0]
     n = hidden_layer_neurons
 
     layers = [
         DenseLayer(input_size, n), # Dense layer with 30 neurons
-        ALinear(), # Linear activation function, temporary
+        ASigmoid(), # Sigmoid activation function
         DenseLayer(n, 10), # Dense output layer, 10 neurons
+        ASigmoid(), # Sigmoid activation function
     ]
     loss = LQuadratic()
 
@@ -57,5 +71,27 @@ def test_predict_single_value():
 
     net = get_training_net(30)
     test_X = test_data[0]
-    test_Y = test_data[1]
-    np.argmax()
+
+    pred_Y = one_hot_encode(net.predict(test_X[5,:]), decode=True)
+    assert pred_Y.shape[0] == 1
+    assert np.all(pred_Y >= 0 and pred_Y <= 9)
+
+def test_predict_batch():
+    """Should be able to get predictions for a batch of data points."""
+
+    net = get_training_net(30)
+    test_X = test_data[0]
+
+    pred_Y = one_hot_encode(net.predict(test_X[:99,:]), decode=True)
+    assert pred_Y.shape[0] == 99
+    assert np.all((pred_Y >= 0) & (pred_Y <= 9))
+
+def test_validation():
+    """Should be able to get a risk score for a validation set."""
+
+    net = get_training_net(30)
+    val_X = val_data[0]
+    val_Y = val_data[1]
+
+    risk = net.validate(val_X, val_Y)
+    assert risk > 0

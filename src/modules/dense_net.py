@@ -9,7 +9,7 @@
 
 import numpy as np
 
-class ALinear():
+class ASigmoid():
     """
     Simple linear activation function. Simple passes the data through.
     """
@@ -18,7 +18,7 @@ class ALinear():
         pass
 
     def forward(self, Z):
-        return Z
+        return 1 / (1 + np.e ** - Z)
 
 class LQuadratic():
     """
@@ -87,9 +87,11 @@ class DenseNet():
         risk = self.loss.forward(pred_Y, val_Y)
 
         if epoch == None:
-            print(f"Loss on input data:")
+            print(f"Loss on input data: {risk}")
         else:
             print(f"Epoch {epoch} --- {risk}")
+
+        return risk
 
     def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1):
         """Takes in X, Y, epochs, and batch size."""
