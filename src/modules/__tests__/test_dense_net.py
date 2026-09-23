@@ -21,6 +21,16 @@ def test_sigmoid():
     assert a_out[3] > 0.990 and a_out[3] < 0.999
     assert a_out[4] == approx(1)
 
+def test_sigmoid_matrix():
+    """Test that the sigmoid activation function is behaving (roughly) as expected on a matrix."""
+    act = ASigmoid()
+
+    a_in = np.array([[-2, 2, 3.5, -4, 0], [1, 1.1, 2.3, 4.7, -5]])
+    a_out = act.forward(a_in)
+
+    assert a_out.shape == a_in.shape
+    assert np.all((a_out >= 0) & (a_out <= 1))
+
 ### TEST LOSS CLASSES ###
 
 def test_lquadratic():
@@ -30,12 +40,12 @@ def test_lquadratic():
     pred = np.array([[0, 0, 0, 0, 1]])
     actual = np.array([[0, 0, 0, 0, 1]])
 
-    assert L.calc(pred, actual) == 0
+    assert L.forward(pred, actual) == 0
 
     pred = np.array([[1, 0, 0, 0, 0]])
     actual = np.array([[0, 0, 0, 0, 1]])
 
-    assert L.calc(pred, actual) == approx(1)
+    assert L.forward(pred, actual) == approx(1)
 
     pred = np.array([
         [1, 0, 0, 0, 0],
@@ -48,7 +58,7 @@ def test_lquadratic():
         [0, 0, 0, 0, 1],
     ])
 
-    assert L.calc(pred, actual) == approx(1)
+    assert L.forward(pred, actual) == approx(1)
 
 ### TEST PREDICTION/VALIDATION ###
 
@@ -74,7 +84,7 @@ def test_predict_single_value():
 
     pred_Y = one_hot_encode(net.predict(test_X[5,:]), decode=True)
     assert pred_Y.shape[0] == 1
-    assert np.all(pred_Y >= 0 and pred_Y <= 9)
+    assert np.all((pred_Y >= 0) & (pred_Y <= 9))
 
 def test_predict_batch():
     """Should be able to get predictions for a batch of data points."""
