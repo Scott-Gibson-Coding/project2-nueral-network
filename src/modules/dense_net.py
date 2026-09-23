@@ -28,13 +28,14 @@ class LQuadratic():
     def __init__(self):
         pass
 
-    def calc(y_pred, y_true):
+    def calc(self, y_pred, y_true):
         """Returns the loss on a given batch."""
 
         n = y_pred.shape[0]
-        return (1 / 2*n) * (np.linalg.norm(y_pred - y_true, ord=2) ** 2)
+        # Use Frobenius norm to get sum of squared differences
+        return (np.linalg.norm(y_pred - y_true) ** 2) / (2 * n)
 
-    def calc_gradient():
+    def calc_gradient(self):
         """Returns the initial gradient to kick off gradient descent."""
         pass
 
