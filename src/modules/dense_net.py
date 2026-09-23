@@ -28,14 +28,14 @@ class LQuadratic():
     def __init__(self):
         pass
 
-    def calc(self, y_pred, y_true):
+    def forward(self, y_pred, y_true):
         """Returns the loss on a given batch."""
 
         n = y_pred.shape[0]
         # Use Frobenius norm to get sum of squared differences
         return (np.linalg.norm(y_pred - y_true) ** 2) / (2 * n)
 
-    def calc_gradient(self):
+    def backwards(self):
         """Returns the initial gradient to kick off gradient descent."""
         pass
 
@@ -49,33 +49,63 @@ class DenseLayer():
         """
         Initialize the layer with random values for the initial weights and params.
 
-        :param in_size: The amount of nodes in the prior 
+        :param in_size: The nodes sending information into this layer.
+        :param out_size: The nodes in this layer which will send data to the following layer.
         """
         self.W = np.random.random((in_size, out_size))
-        self.b = np.random.random(1, out_size)
+        self.b = np.random.random((1, out_size))
 
     def forward(self, X):
-        """Performs the forward pass."""
+        """Performs the forward pass, sends output to activation layer."""
         return X @ self.W + self.b
+
+    def backwards(self):
+        """Performs a backwards pass and updates weights."""
+        pass
 
 
 class DenseNet():
-    def __init__(self, layers):
+    def __init__(self, layers, loss):
         self.layers = layers
+        self.loss = loss
 
-    def train(train_X, train_Y, epochs=10, batch_size=1):
+    def predict(self, data):
+        """Returns a matrix of predicted outputs."""
+        X = np.copy(data)
+        for layer in self.layers:
+            X = layer.forward(X)
+        
+        return X
+
+    def validate(self, val_X, val_Y, epoch=None):
+        """Performs only a forwards pass and determines the loss on a validation set."""
+        X = np.copy(val_X)
+        for layer in self.layers:
+            X = layer.forward(X)
+
+        pred_Y = X
+        risk = self.loss.forward(pred_Y, val_Y)
+
+        if epoch == None:
+            print(f"Loss on input data:")
+        else:
+            print(f"Epoch {epoch} --- {risk}")
+
+    def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1):
         """Takes in X, Y, epochs, and batch size."""
 
-        # Create mini-batches
+        for epoch in range(1, epochs+1):
+            # Create mini-batches
 
-        # Forward pass through self.layers
+            # Forward pass through self.layers
 
-        # Calculate loss
+            # Calculate loss
 
-        # Calculate initial gradient
+            # Calculate initial gradient
 
-        # Backwards pass through reversed(self.layers)
+            # Backwards pass through reversed(self.layers)
 
-        # Update weights
-        
-        pass
+            # Update weights
+
+            # Validate results and continue to next epoch
+            self.validate(val_X, val_Y, epoch)

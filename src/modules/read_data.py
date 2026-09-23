@@ -15,15 +15,19 @@ def load_data(file_path):
         test_data = [np.array(in_data[2][0]), np.array(in_data[2][1])]
     return train_data, val_data, test_data
 
-def transform_output(Y):
+def one_hot_encode(Y, decode=False):
     """
-    Transforms the output data from an array of ints into one-hot encoded
-    arrays.
+    Either encodes Y into one-hot encoded arrays of 1s and 0s, or decodes into the original
+    integer values.
     """
-    Y_out = np.zeros((Y.shape[0], 10), dtype=np.int64)
-    for i in range(Y.shape[0]):
-        Y_out[i, Y[i]] = 1
-    return Y_out
+    if decode == False:
+        # One-hot encode
+        Y_out = np.zeros((Y.shape[0], 10), dtype=np.int64)
+        for i in range(Y.shape[0]):
+            Y_out[i, Y[i]] = 1
+        return Y_out
+    else:
+        return np.argmax(Y, axis=1)
 
 def read_data():
     """
@@ -34,9 +38,9 @@ def read_data():
     """
 
     train_data, val_data, test_data = load_data(DATA_FILE_PATH)
-    train_data[1] = transform_output(train_data[1])
-    val_data[1] = transform_output(val_data[1])
-    test_data[1] = transform_output(test_data[1])
+    train_data[1] = one_hot_encode(train_data[1])
+    val_data[1] = one_hot_encode(val_data[1])
+    test_data[1] = one_hot_encode(test_data[1])
 
     return train_data, val_data, test_data
     
