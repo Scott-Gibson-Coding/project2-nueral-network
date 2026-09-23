@@ -15,6 +15,12 @@ def test_input_data_shape():
     assert val_data[0].shape[0] == val_data[1].shape[0]
     assert test_data[0].shape[0] == test_data[1].shape[0]
 
+def test_input_one_hot_encoded():
+    """Expect output vals to be one hot encoded, so 2 should be [0, 0, 1, 0, ...]"""
+    assert train_data[1].shape[1] == 10
+    assert val_data[1].shape[1] == 10
+    assert test_data[1].shape[1] == 10
+
 def test_input_img():
     """Expect each data point to be able to contain a 28x28 img."""
     img_size = 28 * 28

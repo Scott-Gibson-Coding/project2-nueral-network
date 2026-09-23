@@ -20,8 +20,10 @@ def transform_output(Y):
     Transforms the output data from an array of ints into one-hot encoded
     arrays.
     """
-    print(Y.shape)
-    return Y
+    Y_out = np.zeros((Y.shape[0], 10), dtype=np.int64)
+    for i in range(Y.shape[0]):
+        Y_out[i, Y[i]] = 1
+    return Y_out
 
 def read_data():
     """
