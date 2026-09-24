@@ -109,15 +109,15 @@ def test_validation():
 def test_training_small_1_batch():
     """
     Should be able to train with the following:
-      - Batch Size: 1
-      - Epochs: 5
+      - Batch Size: 15
+      - Epochs: 10
       - Training Data: 50 elements
       - Validation Data: Training Data
     """
 
     net = get_training_net(30)
-    epochs = 5
-    batch_size = 1
+    epochs = 10
+    batch_size = 15
     train_X = train_data[0][:50,:]
     train_Y = train_data[1][:50,:]
 

@@ -6,32 +6,14 @@
 #  - X (Batch of inputs - shape[batch-size, input-layer])
 #  - Z (Result of { W @ X + b })
 #  - A (Result of applying Activation function to Z)
+#
+# Exposed functions:
+#  - For consistency, layers and the cost/risk calculation function should expose a
+#    "forward" function, and a "backwards" function.
 
 import numpy as np
 
-class ASigmoid():
-    """
-    Simple linear activation function. Simple passes the data through.
-    """
-
-    def __init__(self):
-        self.Z = None # Cache for the input of Z passed into the layer.
-
-    def _sigmoid(self, Z):
-        """Performs sigmoid element-wise over the matrix Z."""
-        return 1 / (1 + np.exp(-Z))
-    
-    def forward(self, Z):
-        # Cache values for backwards pass
-        self.Z = Z
-        
-        return self._sigmoid(Z)
-
-    def backwards(self, chain_grad):
-        # Multiplies the gradient passed in by the derivative of the activation.
-
-        d_sigmoid = self._sigmoid(self.Z) * (1 - self._sigmoid(self.Z))
-        return np.multiply(d_sigmoid, chain_grad)
+### LOSS/COST CLASSES
 
 class LQuadratic():
     """
@@ -61,6 +43,35 @@ class LQuadratic():
         # Avg gradient w.r.t. activated predictions
         return (self.y_pred - self.y_true) / n
 
+### ACTIVATION CLASSES
+
+class ASigmoid():
+    """
+    Simple linear activation function. Simple passes the data through.
+    """
+
+    def __init__(self):
+        self.Z = None # Cache for the input of Z passed into the layer.
+
+    def _sigmoid(self, Z):
+        """Performs sigmoid element-wise over the matrix Z."""
+        return 1 / (1 + np.exp(-Z))
+    
+    def forward(self, Z):
+        # Cache values for backwards pass
+        self.Z = Z
+        
+        return self._sigmoid(Z)
+
+    def backwards(self, chain_grad, step_size=None):
+        # Multiplies the gradient passed in by the derivative of the activation.
+
+        s = self._sigmoid(self.Z)
+        d_sigmoid = s * (1 - s)
+        return np.multiply(d_sigmoid, chain_grad)
+
+### LAYER CLASSES
+
 class DenseLayer():
     """
     Simple dense layer with "n" neurons. It needs to know how many connections are coming in
@@ -74,16 +85,30 @@ class DenseLayer():
         :param in_size: The nodes sending information into this layer.
         :param out_size: The nodes in this layer which will send data to the following layer.
         """
-        self.W = np.random.random((in_size, out_size))
-        self.b = np.random.random((1, out_size))
+        self.W = np.random.rand(in_size, out_size) * 2 - 1
+        self.b = np.random.rand(1, out_size) * 2 - 1
+        self.X = None
 
     def forward(self, X):
         """Performs the forward pass, sends output to activation layer."""
+
+        # Cache values for backwards pass
+        self.X = X
+
+        # Return linear combination of activations, weights, and biases
         return X @ self.W + self.b
 
-    def backwards(self):
+    def backwards(self, chain_grad, step_size=1):
         """Performs a backwards pass, updating weights and biases before passing on next gradient."""
-        pass
+
+        # Forward gradient with respect to weights to prior activation
+        next_layer_grad = chain_grad @ self.W.transpose()
+
+        # Update weights, and biases
+        self.W -= self.X.transpose() @ chain_grad * step_size
+        self.b -= np.sum(chain_grad, axis=0) * step_size
+
+        return next_layer_grad
 
 
 class DenseNet():
@@ -115,33 +140,40 @@ class DenseNet():
 
         return risk
 
+    def _get_random_batches(self, X, Y, batch_size):
+        """Generates a shuffled array of indices."""
+        num_batches = X.shape[0]
+        indices = np.random.permutation(num_batches)
+
+        for i in range(0, num_batches, batch_size):
+            batch_indices = indices[i:i+batch_size]
+            yield X[batch_indices], Y[batch_indices]
+
+        # In the case the batch_size doesn't divide evenly, use the last "batch_size" elements as the final batch.
+        batch_indices = indices[-batch_size:]
+        yield X[batch_indices], Y[batch_indices]
+
     def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1):
         """Takes in X, Y, epochs, and batch size."""
 
         for epoch in range(1, epochs+1):
             # Create mini-batches
-            # TODO Temp mini batch is just the first 50 elements
-            batch_X = train_X[:50,:]
-            batch_Y = train_Y[:50,:]
+            batch_gen = self._get_random_batches(train_X, train_Y, batch_size=batch_size)
+            for batch_X, batch_Y in batch_gen:
+                # Forward pass through self.layers
+                X = batch_X
+                for layer in self.layers:
+                    X = layer.forward(X)
 
-            # Forward pass through self.layers
-            X = batch_X
-            for layer in self.layers:
-                X = layer.forward(X)
+                # Calculate loss
+                self.loss.forward(X, batch_Y)
 
-            # Calculate loss
-            risk = self.loss.forward(X, batch_Y)
+                # Calculate initial gradient
+                grad = self.loss.backwards()
 
-            # Calculate initial gradient
-            grad = self.loss.backwards()
-
-            # Backwards pass through reversed(self.layers)
-            for layer in reversed(self.layers):
-                grad = layer.backwards(grad)
-
-            # Update weights
+                # Backwards pass through reversed(self.layers)
+                for layer in reversed(self.layers):
+                    grad = layer.backwards(grad, step_size=1)
 
             # Validate results and continue to next epoch
-            # TODO Validating on the same training batch to see if its actually learning it
-            self.validate(batch_X, batch_Y, epoch)
-            # self.validate(val_X, val_Y, epoch)
+            self.validate(val_X, val_Y, epoch)
