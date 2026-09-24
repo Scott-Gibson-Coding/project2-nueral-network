@@ -55,7 +55,10 @@ class ASigmoid():
 
     def _sigmoid(self, Z):
         """Performs sigmoid element-wise over the matrix Z."""
-        return 1 / (1 + np.exp(-Z))
+
+        # Clamp Z between -50 and 50 to avoid overflow
+        
+        return 1 / (1 + np.exp(-np.clip(Z, -50, 50)))
     
     def forward(self, Z):
         # Cache values for backwards pass
