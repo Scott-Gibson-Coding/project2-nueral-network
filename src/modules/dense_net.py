@@ -15,10 +15,23 @@ class ASigmoid():
     """
 
     def __init__(self):
-        pass
+        self.Z = None # Cache for the input of Z passed into the layer.
 
+    def _sigmoid(self, Z):
+        """Performs sigmoid element-wise over the matrix Z."""
+        return 1 / (1 + np.exp(-Z))
+    
     def forward(self, Z):
-        return 1 / (1 + np.e ** - Z)
+        # Cache values for backwards pass
+        self.Z = Z
+        
+        return self._sigmoid(Z)
+
+    def backwards(self, chain_grad):
+        # Multiplies the gradient passed in by the derivative of the activation.
+
+        d_sigmoid = self._sigmoid(self.Z) * (1 - self._sigmoid(self.Z))
+        return np.multiply(d_sigmoid, chain_grad)
 
 class LQuadratic():
     """
@@ -26,10 +39,15 @@ class LQuadratic():
     """
 
     def __init__(self):
-        pass
+        self.y_pred = None
+        self.y_true = None
 
     def forward(self, y_pred, y_true):
         """Returns the loss on a given batch."""
+
+        # Cache values for backwards pass
+        self.y_pred = y_pred
+        self.y_true = y_true
 
         n = y_pred.shape[0]
         # Use Frobenius norm to get sum of squared differences
@@ -37,7 +55,11 @@ class LQuadratic():
 
     def backwards(self):
         """Returns the initial gradient to kick off gradient descent."""
-        pass
+
+        n = self.y_pred.shape[0]
+
+        # Avg gradient w.r.t. activated predictions
+        return (self.y_pred - self.y_true) / n
 
 class DenseLayer():
     """
@@ -60,7 +82,7 @@ class DenseLayer():
         return X @ self.W + self.b
 
     def backwards(self):
-        """Performs a backwards pass and updates weights."""
+        """Performs a backwards pass, updating weights and biases before passing on next gradient."""
         pass
 
 
@@ -98,16 +120,28 @@ class DenseNet():
 
         for epoch in range(1, epochs+1):
             # Create mini-batches
+            # TODO Temp mini batch is just the first 50 elements
+            batch_X = train_X[:50,:]
+            batch_Y = train_Y[:50,:]
 
             # Forward pass through self.layers
+            X = batch_X
+            for layer in self.layers:
+                X = layer.forward(X)
 
             # Calculate loss
+            risk = self.loss.forward(X, batch_Y)
 
             # Calculate initial gradient
+            grad = self.loss.backwards()
 
             # Backwards pass through reversed(self.layers)
+            for layer in reversed(self.layers):
+                grad = layer.backwards(grad)
 
             # Update weights
 
             # Validate results and continue to next epoch
-            self.validate(val_X, val_Y, epoch)
+            # TODO Validating on the same training batch to see if its actually learning it
+            self.validate(batch_X, batch_Y, epoch)
+            # self.validate(val_X, val_Y, epoch)

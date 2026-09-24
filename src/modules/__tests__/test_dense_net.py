@@ -105,3 +105,28 @@ def test_validation():
 
     risk = net.validate(val_X, val_Y)
     assert risk > 0
+
+def test_training_small_1_batch():
+    """
+    Should be able to train with the following:
+      - Batch Size: 1
+      - Epochs: 5
+      - Training Data: 50 elements
+      - Validation Data: Training Data
+    """
+
+    net = get_training_net(30)
+    epochs = 5
+    batch_size = 1
+    train_X = train_data[0][:50,:]
+    train_Y = train_data[1][:50,:]
+
+    starting_risk = net.validate(train_X, train_Y)
+    net.train(
+        train_X=train_X, train_Y=train_Y,
+        val_X=train_X, val_Y=train_Y,
+        epochs=epochs,
+        batch_size=batch_size
+    )
+    ending_risk = net.validate(train_X, train_Y)
+    assert starting_risk > ending_risk
