@@ -10,6 +10,12 @@
 # Exposed functions:
 #  - For consistency, layers and the cost/risk calculation function should expose a
 #    "forward" function, and a "backwards" function.
+#
+# TODO Room for Improvement
+# - Experiment with different hyperparameters
+# - Look into adjusting step-size with "momentum", and early stop if the
+#   cost diff between epochs slows down or fully stops
+# - Implement some additional activation functions, like ReLU
 
 import numpy as np
 

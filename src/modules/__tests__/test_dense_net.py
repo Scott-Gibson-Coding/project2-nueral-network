@@ -167,3 +167,25 @@ def test_full_training_set_expensive():
     assert starting_risk > ending_risk
 
     net.get_accuracy(test_data[0], test_data[1])
+
+# Managed ###.## risk
+def test_overfit():
+    """Expect reasonable accuracy testing on full dataset."""
+    net = get_training_net(40)
+    epochs = 50000
+    batch_size = 1
+
+    data_X = test_data[0][25:75]
+    data_Y = test_data[1][25:75]
+
+    starting_risk = net.validate(data_X, data_Y)
+    net.train(
+        train_X=data_X, train_Y=data_Y,
+        val_X=data_X, val_Y=data_Y,
+        epochs=epochs,
+        batch_size=batch_size
+    )
+    ending_risk = net.validate(data_X, data_Y)
+    assert starting_risk > ending_risk
+
+    net.get_accuracy(data_X, data_Y)
