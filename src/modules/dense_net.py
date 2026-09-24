@@ -127,6 +127,22 @@ class DenseNet():
         
         return X
 
+    def get_accuracy(self, test_X, test_Y):
+        """Returns the accuracy of the model on some test data."""
+        X = np.copy(test_X)
+        for layer in self.layers:
+            X = layer.forward(X)
+
+        for row in X:
+            idx = np.argmax(row)
+            row *= 0
+            row[idx] = 1
+
+        wrong_count = np.count_nonzero(test_Y - X) / 2
+        accuracy = (test_X.shape[0] - wrong_count) / test_X.shape[0] * 100
+        print(f"Accuracy of model on test dataset: % {round(accuracy, 3)}")
+        return accuracy
+
     def validate(self, val_X, val_Y, epoch=None):
         """Performs only a forwards pass and determines the loss on a validation set."""
         X = np.copy(val_X)
