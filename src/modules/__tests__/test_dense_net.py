@@ -131,11 +131,11 @@ def test_training_small_1_batch():
     ending_risk = net.validate(train_X, train_Y)
     assert starting_risk > ending_risk
 
-# Got %94.43
+# Got %95.06 with 40 epochs
 def test_full_training_set():
     """Expect reasonable accuracy testing on full dataset."""
     net = get_training_net(30)
-    epochs = 20
+    epochs = 40
     batch_size = 50
 
     starting_risk = net.validate(test_data[0], test_data[1])
