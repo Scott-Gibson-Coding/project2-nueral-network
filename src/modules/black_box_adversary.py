@@ -13,6 +13,7 @@
 
 import numpy as np
 from src.modules.dense_net import DenseNet
+from src.modules.save_data import save_points
 
 class BlackBoxAdversary():
     # Takes in a starting image which we wish to mock with a new image that is as close as possible to the original
@@ -32,7 +33,7 @@ class BlackBoxAdversary():
         """Returns the distance in the 2-norm between x and x_k."""
         return np.linalg.norm(self.x - x_k, ord=2)
 
-    def generate(self):
+    def generate(self, img_offs: int = None):
         """
         Main attacking method, generates a new image as close to the original "x" provided
         as possible while keeping it misclassified.
@@ -40,8 +41,8 @@ class BlackBoxAdversary():
 
         # Hyper-parameters
         max_steps = 1000
-        delta = 0.1
-        epsilon = 0.01
+        delta = 1
+        epsilon = 0.1
 
         closeness_threshold = 1e-5
 
@@ -50,6 +51,9 @@ class BlackBoxAdversary():
         while self._classify(x_k):
             x_k = np.random.random(self.x.shape)
 
+        # Store image points to display later
+        xk_points = []
+
         for step in range(max_steps):
             diff_v = self.x - x_k   # Vector x - x_k
             dist = self._dist(x_k)  # Distance between x, x_k in 2-norm
@@ -57,7 +61,12 @@ class BlackBoxAdversary():
             # Exit condition
             if dist < closeness_threshold:
                 break
-            
+
+            # Save image, note ignore offsets if it would save over 50 images
+            if img_offs and len(xk_points) < 50:
+                if step % img_offs == 0:
+                    xk_points.append(x_k)
+
             # Step 2. Sample a random step, and project it orthogonally onto a hpyer-sphere centered 
             # around x with radius ||x - x_k||.
             noise = np.random.randn(*x_k.shape)
@@ -96,5 +105,8 @@ class BlackBoxAdversary():
                 delta *= 0.95
                 epsilon *= 0.95
 
+        # Save images if any are stored
+        if xk_points:
+            save_points(xk_points, "spook-step")
         return x_k
     

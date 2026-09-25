@@ -14,4 +14,7 @@ def save_points(data_points, name="data_point"):
 
         plt.imshow(img, cmap="gray", vmin=0, vmax=1)
         plt.axis("off")
-        plt.savefig(f"{IMG_DIR_PATH}/{name}.png", bbox_inches="tight", pad_inches=0.1)
+        fig_name = f"{IMG_DIR_PATH}/{name}"
+        if len(data_points) > 1:
+            fig_name += f"-{idx}"
+        plt.savefig(f"{fig_name}.png", bbox_inches="tight", pad_inches=0.1)
