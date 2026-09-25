@@ -67,7 +67,7 @@ class BlackBoxAdversary():
                 if step % img_offs == 0:
                     xk_points.append(x_k)
 
-            # Step 2. Sample a random step, and project it orthogonally onto a hpyer-sphere centered 
+            # Step 2. Sample a random step, and project it orthogonally onto a hyper-sphere centered 
             # around x with radius ||x - x_k||.
             noise = np.random.randn(*x_k.shape)
             proj = np.dot(noise, diff_v) / (dist ** 2) * diff_v
@@ -86,7 +86,7 @@ class BlackBoxAdversary():
                 (orth_direction / np.linalg.norm(orth_direction))
 
             # Step 3. Nudge the adversary a small distance (epsilon) towards x.
-            forward_step = epsilon * dist * (self.x - orth_candidate) / dist
+            forward_step = epsilon * (self.x - orth_candidate)
             x_candidate = orth_candidate + forward_step
 
             # Clip candidate to ensure it's in the output range
