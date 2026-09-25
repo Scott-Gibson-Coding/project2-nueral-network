@@ -21,7 +21,6 @@ def save_points(data_points):
         plt.imshow(img, cmap="gray", vmin=0, vmax=1)
         plt.axis("off")
         plt.savefig(f"{IMG_DIR_PATH}/data_point_{idx}.png", bbox_inches="tight", pad_inches=0.1)
-        # plt.close()
 
 # Read in pickled dataset
 train_data, val_data, test_data = read_data()
