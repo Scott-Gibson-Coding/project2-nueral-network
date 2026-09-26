@@ -82,12 +82,11 @@ class BlackBoxAdversary():
 
             # Re-project onto the sphere centered at x_original
             orth_direction = orth_candidate - self.x
-            orth_candidate = self.x + dist * \
-                (orth_direction / np.linalg.norm(orth_direction))
+            orth_direction = orth_direction / np.linalg.norm(orth_direction)
+            orth_candidate = self.x + dist * orth_direction
 
             # Step 3. Nudge the adversary a small distance (epsilon) towards x.
-            forward_step = epsilon * (self.x - orth_candidate)
-            x_candidate = orth_candidate + forward_step
+            x_candidate = orth_candidate + epsilon * dist * (self.x - orth_candidate)
 
             # Clip candidate to ensure it's in the output range
             x_candidate = np.clip(x_candidate, 0.0, 1.0)

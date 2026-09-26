@@ -34,6 +34,7 @@ def test_black_box_gen():
         if np.argmax(net.predict(train_X[i])) == np.argmax(train_Y[i]):
             x = train_X[i]
             y = train_Y[i]
+            break
 
     save_points([x], "black-box-target")
 
