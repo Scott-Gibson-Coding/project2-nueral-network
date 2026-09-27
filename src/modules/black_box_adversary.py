@@ -11,6 +11,7 @@
 #
 #
 
+import math
 import numpy as np
 from src.modules.dense_net import DenseNet
 from src.modules.save_data import save_points
@@ -40,9 +41,9 @@ class BlackBoxAdversary():
         """
 
         # Hyper-parameters
-        max_steps = 1000
-        delta = 1
-        epsilon = 0.1
+        max_steps = 500_000
+        delta = 0.1
+        epsilon = 0.01
 
         closeness_threshold = 1e-5
 
@@ -57,7 +58,8 @@ class BlackBoxAdversary():
         for step in range(max_steps):
             diff_v = self.x - x_k   # Vector x - x_k
             dist = self._dist(x_k)  # Distance between x, x_k in 2-norm
-            print(f"Step {step}: {round(dist, 5)}")
+            if step % 1000 == 0:
+                print(f"Step {step}: {round(dist, 5)}")
             # Exit condition
             if dist < closeness_threshold:
                 break
@@ -86,7 +88,7 @@ class BlackBoxAdversary():
             orth_candidate = self.x + dist * orth_direction
 
             # Step 3. Nudge the adversary a small distance (epsilon) towards x.
-            x_candidate = orth_candidate + epsilon * dist * (self.x - orth_candidate)
+            x_candidate = orth_candidate + epsilon * (self.x - orth_candidate)
 
             # Clip candidate to ensure it's in the output range
             x_candidate = np.clip(x_candidate, 0.0, 1.0)
@@ -97,12 +99,12 @@ class BlackBoxAdversary():
             if is_adversarial:
                 x_k = x_candidate
                 # Try to accelerate progress
-                delta *= 1.05
-                epsilon *= 1.05
+                delta = min(delta * 1.05, 1.0)
+                epsilon = min(epsilon * 1.05, 0.1)
             else:
                 # Decrease step sizes, we stepped across the boundary into a non-adversarial zone
-                delta *= 0.95
-                epsilon *= 0.95
+                delta = max(delta * 0.95, 1e-3)
+                epsilon = max(epsilon * 0.95, 1e-4)
 
         # Save images if any are stored
         if xk_points:
