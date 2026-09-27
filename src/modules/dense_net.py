@@ -149,7 +149,7 @@ class DenseNet():
         print(f"Accuracy of model on test dataset: % {round(accuracy, 3)}")
         return accuracy
 
-    def validate(self, val_X, val_Y, epoch=None):
+    def validate(self, val_X, val_Y, epoch=None, verbose=False):
         """Performs only a forwards pass and determines the loss on a validation set."""
         X = np.copy(val_X)
         for layer in self.layers:
@@ -158,10 +158,12 @@ class DenseNet():
         pred_Y = X
         risk = self.loss.forward(pred_Y, val_Y)
 
-        if epoch == None:
-            print(f"Loss on input data: {risk}")
-        else:
-            print(f"Epoch {epoch} --- {risk}")
+        # Logging
+        if verbose:
+            if epoch == None:
+                print(f"Loss on input data: {risk}")
+            else:
+                print(f"Epoch {epoch} --- {risk}")
 
         return risk
 
@@ -178,7 +180,7 @@ class DenseNet():
         batch_indices = indices[-batch_size:]
         yield X[batch_indices], Y[batch_indices]
 
-    def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1):
+    def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1, verbose=False):
         """Takes in X, Y, epochs, and batch size."""
 
         for epoch in range(1, epochs+1):
@@ -201,4 +203,4 @@ class DenseNet():
                     grad = layer.backwards(grad, step_size=1)
 
             # Validate results and continue to next epoch
-            self.validate(val_X, val_Y, epoch)
+            self.validate(val_X, val_Y, epoch, verbose=verbose)

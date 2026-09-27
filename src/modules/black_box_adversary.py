@@ -34,7 +34,7 @@ class BlackBoxAdversary():
         """Returns the distance in the 2-norm between x and x_k."""
         return np.linalg.norm(self.x - x_k, ord=2)
 
-    def generate(self, max_steps=50_000, image_count: int = None):
+    def generate(self, max_steps=50_000, image_count: int = None, verbose=False):
         """
         Main attacking method, generates a new image as close to the original "x" provided
         as possible while keeping it misclassified.
@@ -63,15 +63,16 @@ class BlackBoxAdversary():
         for step in range(max_steps):
             diff_v = self.x - x_k   # Vector x - x_k
             dist = self._dist(x_k)  # Distance between x, x_k in 2-norm
-            if step % 1000 == 0:
-                print(f"Step {step}: {round(dist, 5)}")
+            # Logging
+            if verbose:
+                if step % 1000 == 0:
+                    print(f"Step {step}: {round(dist, 5)}")
             # Exit condition
             if dist < closeness_threshold:
                 break
 
             # Save image, note ignore offsets if it would save over 50 images
             if image_count and len(xk_points) < image_count and abs(prev_dist - dist) / prev_dist > 0.2:
-                print("---Appending xk image point!---")
                 xk_points.append(x_k)
                 prev_dist = dist
 
