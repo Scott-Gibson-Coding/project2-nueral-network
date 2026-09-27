@@ -28,6 +28,8 @@ def train_small_model():
         val_X=val_X, val_Y=val_Y,
         epochs=100, batch_size=200,
     )
+
+    print("Neural net fully trained")
     return net, train_X, train_Y
 
 def test_black_box_gen():
@@ -58,18 +60,19 @@ def test_black_box_gen():
     print(f"Classifies target as {np.argmax(y_true)}")
     print(f"Classifies spook as {np.argmax(y_spook)}")
 
-def test_black_box_gen():
+def test_black_box_gen_new_set():
     """
     Test that we can generate a new set of data all visually close to the correctly classified
-    images. However, at the end we should have 100 new images all within a distance of at most 1
+    images. However, at the end we should have 50 new images all within a distance of at most 1
     from the original images, and the trained network should misclassify all of them (accuracy 0).
     """
     net, train_X, train_Y = train_small_model()
 
-    new_set_size = 5
+    new_set_size = 50
     spook_set_X = []
     spook_set_Y = []
-    max_spook_dist = 1 # Don't accept spooks further than 1 in L-2 norm from a valid datapoint.
+    max_spook_dist = 2 # Don't accept spooks further in L-2 norm from a valid datapoint.
+    failed_spooks = 0
     
     i = 0
     while len(spook_set_X) < new_set_size:
@@ -88,18 +91,30 @@ def test_black_box_gen():
         # generate a new spook, which must be within a specific distance to x
         spook = None
         for _ in range(5):
-            spook = adversary.generate()
+            spook = adversary.generate(max_steps=10_000)
             if np.linalg.norm(x - spook) > max_spook_dist:
+                failed_spooks += 1
                 continue
             else:
                 spook_set_X.append(spook)
                 spook_set_Y.append(y)
+                print(f"Appended spook #{len(spook_set_X)}")
                 break
     
     spook_set_X = np.array(spook_set_X)
     spook_set_Y = np.array(spook_set_Y)
 
-    print(net.get_accuracy(spook_set_X, spook_set_Y))
+    # Model should fail on all images
+    assert net.get_accuracy(spook_set_X, spook_set_Y) == 0
+
     # Uncomment below to save the spook data as images
     # save_points(spook_set_X, "spook")
-    print(np.argmax(spook_set_Y, axis=1))
+
+    # Train model on the generated images, use old training data as validation set
+    net.train(
+        train_X=spook_set_X, train_Y=spook_set_Y,
+        val_X=train_X, val_Y=train_Y,
+        epochs=50, batch_size=20,
+    )
+
+    assert net.get_accuracy(spook_set_X, spook_set_Y) > 80
