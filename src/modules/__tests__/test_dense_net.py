@@ -189,3 +189,31 @@ def test_overfit():
     assert starting_risk > ending_risk
 
     net.get_accuracy(data_X, data_Y)
+
+def test_multiple_layers():
+    """Expect model to work even through multiple layers."""
+
+    input_size = train_data[0][0].shape[0]
+
+    layers = [
+        DenseLayer(input_size, 35), # L1 -> 35 neurons
+        ASigmoid(),
+        DenseLayer(35, 20),         # L2 -> 20 neurons
+        ASigmoid(),
+        DenseLayer(20, 10),         # Output -> 10 neurons
+        ASigmoid(),
+    ]
+    loss = LQuadratic()
+
+    net = DenseNet(layers=layers, loss=loss)
+
+    train_X = train_data[0][:20_000]
+    train_Y = train_data[1][:20_000]
+
+    net.train(
+        train_X=train_X, train_Y=train_Y,
+        val_X=val_data[0], val_Y=val_data[1],
+        epochs=50, batch_size=200, verbose=True,
+    )
+
+    assert net.get_accuracy(test_X=test_data[0], test_Y=test_data[1]) > 85
