@@ -8,8 +8,9 @@ from src.modules.black_box_adversary import BlackBoxAdversary
 # Read in data once to reference for the following tests.
 train_data, val_data, test_data = read_data()
 
-def test_black_box_gen():
-    # First create and train a model to work against
+def train_small_model():
+    # Create and train a small neural net on a sample of training data. Returns the
+    # network, and the training data it used.
     layers = [DenseLayer(
         train_data[0][0].shape[0], 50), ASigmoid(), 
         DenseLayer(50, 10), ASigmoid(),
@@ -27,6 +28,10 @@ def test_black_box_gen():
         val_X=val_X, val_Y=val_Y,
         epochs=100, batch_size=200,
     )
+    return net, train_X, train_Y
+
+def test_black_box_gen():
+    net, train_X, train_Y = train_small_model()
     
     # Find a correctly classified image
     x, y = None, None

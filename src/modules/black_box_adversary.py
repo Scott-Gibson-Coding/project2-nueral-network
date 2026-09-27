@@ -34,14 +34,17 @@ class BlackBoxAdversary():
         """Returns the distance in the 2-norm between x and x_k."""
         return np.linalg.norm(self.x - x_k, ord=2)
 
-    def generate(self, img_offs: int = None):
+    def generate(self, max_steps=50_000, image_count: int = None):
         """
         Main attacking method, generates a new image as close to the original "x" provided
         as possible while keeping it misclassified.
+
+        :param max_steps: The total number of iterations to run.
+        :param image_count: Maximum amount of images to save. Set to None to not save any images.
+        x_k will be saved if there is a 20% or greater change between image distances.
         """
 
-        # Hyper-parameters
-        max_steps = 500_000
+        # Hyper-parameters (adjusted dynamically)
         delta = 0.1
         epsilon = 0.01
 
@@ -54,6 +57,8 @@ class BlackBoxAdversary():
 
         # Store image points to display later
         xk_points = []
+        dist = 0
+        prev_dist = 1
 
         for step in range(max_steps):
             diff_v = self.x - x_k   # Vector x - x_k
@@ -65,9 +70,10 @@ class BlackBoxAdversary():
                 break
 
             # Save image, note ignore offsets if it would save over 50 images
-            if img_offs and len(xk_points) < 50:
-                if step % img_offs == 0:
-                    xk_points.append(x_k)
+            if image_count and len(xk_points) < image_count and abs(prev_dist - dist) / prev_dist > 0.2:
+                print("---Appending xk image point!---")
+                xk_points.append(x_k)
+                prev_dist = dist
 
             # Step 2. Sample a random step, and project it orthogonally onto a hyper-sphere centered 
             # around x with radius ||x - x_k||.
