@@ -15,7 +15,9 @@
 # - Experiment with different hyperparameters
 # - Look into adjusting step-size with "momentum", and early stop if the
 #   cost diff between epochs slows down or fully stops
-# - Implement some additional activation functions, like ReLU
+# - Some debugging ability would be nice, for instance to look into the net layers to see
+#   different details about weights. Like range of weight values, are they exploding/vanishing?
+#   How many weights end up at 0, etc.
 
 import numpy as np
 
@@ -78,6 +80,19 @@ class ASigmoid():
         s = self._sigmoid(self.Z)
         d_sigmoid = s * (1 - s)
         return np.multiply(d_sigmoid, chain_grad)
+
+class AReLU():
+    def forward(self, Z):
+        # Cache values for backwards pass
+        self.Z = Z
+        return np.maximum(0.0, Z)
+
+    def backwards(self, chain_grad, step_size=None):
+        # Multiplies the gradient passed in by the derivative of the activation.
+        # Note: Defining the gradient at 0 to be 0.
+
+        d_relu = np.where(self.Z > 0, 1, 0)
+        return np.multiply(d_relu, chain_grad)
 
 ### LAYER CLASSES
 
@@ -180,7 +195,12 @@ class DenseNet():
         batch_indices = indices[-batch_size:]
         yield X[batch_indices], Y[batch_indices]
 
-    def train(self, train_X, train_Y, val_X, val_Y, epochs=5, batch_size=1, verbose=False):
+    def train(self, 
+              train_X, train_Y, 
+              val_X, val_Y, 
+              epochs=5, batch_size=1, step_size=1,
+              verbose=False
+        ):
         """Takes in X, Y, epochs, and batch size."""
 
         for epoch in range(1, epochs+1):
@@ -200,7 +220,7 @@ class DenseNet():
 
                 # Backwards pass through reversed(self.layers)
                 for layer in reversed(self.layers):
-                    grad = layer.backwards(grad, step_size=1)
+                    grad = layer.backwards(grad, step_size=step_size)
 
             # Validate results and continue to next epoch
             self.validate(val_X, val_Y, epoch, verbose=verbose)

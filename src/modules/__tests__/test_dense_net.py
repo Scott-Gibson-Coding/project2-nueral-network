@@ -2,7 +2,7 @@ from pytest import approx
 import numpy as np
 
 from src.modules.read_data import read_data, one_hot_encode
-from src.modules.dense_net import DenseNet, DenseLayer, ASigmoid, LQuadratic
+from src.modules.dense_net import DenseNet, DenseLayer, ASigmoid, AReLU, LQuadratic
 
 # Read in data once to reference for the following tests.
 train_data, val_data, test_data = read_data()
@@ -30,6 +30,16 @@ def test_sigmoid_matrix():
 
     assert a_out.shape == a_in.shape
     assert np.all((a_out >= 0) & (a_out <= 1))
+
+def test_relu_activation():
+    """Test that the ReLU activation function behaves as expected."""
+    act = AReLU()
+
+    a_in = np.array([[-2, 2, 3.5, -4, 0], [1, 1.1, 2.3, 4.7, -5]])
+    a_out = act.forward(a_in)
+
+    assert a_out.shape == a_in.shape
+    assert np.all(a_out >= 0)
 
 ### TEST LOSS CLASSES ###
 
@@ -143,7 +153,8 @@ def test_full_training_set():
         train_X=train_data[0], train_Y=train_data[1],
         val_X=val_data[0], val_Y=val_data[1],
         epochs=epochs,
-        batch_size=batch_size
+        batch_size=batch_size,
+        verbose=True,
     )
     ending_risk = net.validate(test_data[0], test_data[1])
     assert starting_risk > ending_risk
@@ -217,3 +228,27 @@ def test_multiple_layers():
     )
 
     assert net.get_accuracy(test_X=test_data[0], test_Y=test_data[1]) > 85
+
+# TODO Still needs to add softmax activation function, and maybe log-loss?
+def test_relu_activation_softmax_loss():
+    """Test that relu activation and softmax activation function on the output layer."""
+    input_size = train_data[0][0].shape[0]
+
+    layers = [
+        DenseLayer(input_size, 30), # Dense layer with 20 neurons
+        AReLU(),                    # ReLU activation function
+        DenseLayer(30, 10),         # Dense output layer, 10 neurons
+        ASigmoid(),                 # Sigmoid (output) activation function
+    ]
+    loss = LQuadratic()
+
+    net = DenseNet(layers=layers, loss=loss)
+
+    net.train(
+        train_X=train_data[0][:20000], train_Y=train_data[1][:20000],
+        val_X=val_data[0], val_Y=val_data[1],
+        batch_size=400, epochs=200,
+        verbose=True,
+    )
+
+    assert net.get_accuracy(test_X=test_data[0], test_Y=test_data[1]) > 80
